@@ -3,3 +3,7 @@ HANDOFF.md
 .ferrite/
 */.ferrite/
 __pycache__/
+*.hdf5
+*.h5
+*.msh
+*.vtkhdf

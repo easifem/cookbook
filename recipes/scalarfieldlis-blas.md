@@ -51,8 +51,8 @@ values: [ScalarFieldLis: Getting values](scalarfieldlis-get.md),
    bindings. `Norm(normType)` is not overridden: the `AbstractNodeField_`
    version selects `Norm1`, `Norm2` or `Normi` from
    `TypeConvergenceOpt%normL1`, `normL2`, `normInfinity` (BaseType), so
-   it reaches the LIS norms by dynamic dispatch (read from the code; no
-   LIS test calls it).
+   it reaches the LIS norms by dynamic dispatch
+   (`classes:src/modules/ScalarFieldLis/examples/Norm_test_1.F90`).
 3. **Between engines use Set.** `x%Set(VALUE=n)` or `x = n` (LIS <-
    native), `n%Set(VALUE=x)` (native <- LIS), `Set(VALUE=, scale=,
    addContribution=)` to scale or add, `SetMultiple(..., VALUE=field,
@@ -170,6 +170,8 @@ CALL lis%DEALLOCATE()
   SCAL, COPY, Swap)
 - `classes:src/modules/ScalarFieldLis/examples/Norm2_test_1.F90`
   (norms, DOT_PRODUCT, PMUL, Reciprocal)
+- `classes:src/modules/ScalarFieldLis/examples/Norm_test_1.F90`
+  (`Norm(normType)`)
 - `classes:src/modules/ScalarFieldLis/examples/COPY_test_1.F90` (COPY
   between LIS fields, Set between engines)
 - `classes:src/modules/ScalarFieldLis/examples/ScalarFieldLis_test.toml`

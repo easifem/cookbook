@@ -44,16 +44,17 @@ Implementations: `@BlasMethods.F90` in
    `CLASS(AbstractNodeField_)`, so a `ScalarField_` of the same size
    type-checks too.
 4. **Mixed engines.** Copy the LIS field into a native one (or the
-   other way) with `Set(VALUE=)` (Set13), then call the BLAS method on
-   fields of one engine.
+   other way) with `Set(VALUE=)` (Set13) or the assignment `n = u`,
+   which calls Set13; then call the BLAS method on fields of one
+   engine.
 
 All BLAS methods, LIS engine (trimmed from `AXPY_test_1` of
 `VectorFieldLis`; 12 values, 6 nodes, `spaceCompo = 2`). For a native
 `VectorField_` the calls are the same: declare `TYPE(VectorField_)`,
 use `engine="NATIVE_SERIAL"` and `VectorField_test.toml`, and drop
-`lis`. The native code is tested with `ScalarField_` in
-`classes:src/modules/AbstractNodeField/examples/` (`AXPY_test_1`, ...);
-there is no native `VectorField_` BLAS test yet.
+`lis`, as in the native test
+`classes:src/modules/VectorField/examples/AXPY_test_1.F90` (same values,
+plus `Norm(normType)`).
 
 ```fortran
 USE BaseType, ONLY: math => TypeMathOpt
@@ -142,6 +143,8 @@ CALL m%AXPY(x=n, scale=2.0_DFP)       ! native + native
 
 - `classes:src/modules/VectorFieldLis/examples/AXPY_test_1.F90` (all
   BLAS methods, LIS)
+- `classes:src/modules/VectorField/examples/AXPY_test_1.F90` (all BLAS
+  methods and `Norm(normType)`, native `VectorField_`)
 - `classes:src/modules/VectorFieldLis/examples/Set_test_2.F90` (copy
   across engines)
 - `classes:src/modules/VectorFieldLis/examples/VectorFieldLis_test.toml`

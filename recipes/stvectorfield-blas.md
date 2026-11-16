@@ -35,8 +35,8 @@ Implementations: `@BlasMethods.F90` in
    `x%Norm(normType)` with `TypeConvergenceOpt%normL1`, `normL2` or
    `normInfinity` (`BaseType`), `x%DOT_PRODUCT(obj2=y)`.
 4. **Different engines.** Move the values first with `Set(VALUE=)`
-   (Set14), which works between engines, then call BLAS on fields of
-   one engine.
+   (Set14) or the assignment `n = u`, which calls Set14; both work
+   between engines. Then call BLAS on fields of one engine.
 
 Trimmed from `AXPY_test_1` of `STVectorFieldLis` (24 values: 6 nodes,
 `spaceCompo = 2`, `timeCompo = 2`):
@@ -113,11 +113,10 @@ CALL dom%DEALLOCATE()
 CALL lis%DEALLOCATE()
 ```
 
-Native `STVectorField_` (unverified: no test of BLAS on a native
-`STVectorField_`; the native methods are tested on `ScalarField_` in
-`classes:src/modules/AbstractNodeField/examples/`): the same calls with
-`TYPE(STVectorField_)`, `STVectorField_test.toml`,
-`engine="NATIVE_SERIAL"` and without `lis`. Mixing engines (trimmed
+Native `STVectorField_`: the same calls with `TYPE(STVectorField_)`,
+`STVectorField_test.toml`, `engine="NATIVE_SERIAL"` and without `lis`
+(`classes:src/modules/STVectorField/examples/AXPY_test_1.F90`, same
+values, plus `Norm(normType)`). Mixing engines (trimmed
 from `Set_test_2` of `STVectorFieldLis`; `u` is LIS, `n` native):
 
 ```fortran
@@ -130,6 +129,8 @@ CALL u%Set(VALUE=n)                     ! LIS <- native, then BLAS on LIS
 
 - `classes:src/modules/STVectorFieldLis/examples/AXPY_test_1.F90` (all
   BLAS methods, LIS)
+- `classes:src/modules/STVectorField/examples/AXPY_test_1.F90` (all
+  BLAS methods and `Norm(normType)`, native `STVectorField_`)
 - `classes:src/modules/STVectorFieldLis/examples/Set_test_2.F90` (Set14
   between engines)
 - `classes:src/modules/STVectorFieldLis/examples/STVectorFieldLis_test.toml`

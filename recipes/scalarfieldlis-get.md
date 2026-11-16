@@ -46,8 +46,9 @@ Implementations: `ScalarFieldLis_Class@GetMethods.F90` in
    - `Get(VALUE=fevar, globalNode(:), islocal)` (Get4) and
      `GetFEVariable(globalNode, islocal, VALUE)`: a nodal, space,
      scalar `FEVariable_`; `fevar` must be initiated with room for
-     `SIZE(globalNode)` values. No LIS test calls them (native test:
-     `classes:src/modules/ScalarField/examples/Set_test_3.F90`).
+     `SIZE(globalNode)` values
+     (`classes:src/modules/ScalarFieldLis/examples/Get_test_1.F90`;
+     native: `classes:src/modules/ScalarField/examples/Set_test_3.F90`).
 4. **By index** (overridden by `ScalarFieldLis_`; `tsize = (iend -
    istart) / stride + 1` for the ranges):
    - `GetSingle(indx, VALUE)`: `lis_vector_get_value`.
@@ -145,6 +146,8 @@ CALL lis%DEALLOCATE()
   (GetMultiple4)
 - `classes:src/modules/ScalarFieldLis/examples/Set_test_4.F90` (native
   field from a LIS field)
+- `classes:src/modules/ScalarFieldLis/examples/Get_test_1.F90` (Get4,
+  `GetFEVariable`)
 - `classes:src/modules/ScalarFieldLis/examples/Initiate_test_1.F90`
   (`Size`)
 - `classes:src/modules/ScalarFieldLis/examples/Import_test_1.F90`

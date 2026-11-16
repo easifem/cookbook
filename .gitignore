@@ -1,3 +1,5 @@
 api-index/
 HANDOFF.md
+.ferrite/
+*/.ferrite/
 __pycache__/

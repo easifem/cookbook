@@ -8,8 +8,10 @@
 !
 ! [x] Read mesh
 ! [x] Create scalar field
-! [ ] Create diffusion matrix
 !
+! Day-03: of DGM
+!
+! [ ] Create diffusion matrix
 !
 ! USE BaseType, ONLY: math => TypeMathOpt
 ! !! TypeMathOpt is in BaseType, but we renamed as math
@@ -40,6 +42,8 @@ USE AbstractMesh_Class, ONLY: AbstractMesh_
 USE BaseType, ONLY: math => TypeMathOpt
 USE BaseType, ONLY: ElemShapeData_
 USE BaseType, ONLY: QuadraturePoint_
+USE BaseType, ONLY: TypeDOFOpt
+USE BoundingBox_Method, ONLY: Reallocate
 USE DiffusionMatrix_Method, ONLY: DiffusionMatrix_
 USE DiffusionMatrix_Method, ONLY: DiffusionMatrix_
 USE Display_Method, ONLY: Display
@@ -49,9 +53,11 @@ USE ElemShapeData_Method, ONLY: ElemShapeDataDisplay => Display
 USE ExceptionHandler_Class, ONLY: e
 USE FEDOF_Class, ONLY: FEDOF_
 USE FEDomain_Class, ONLY: FEDomain_
+USE FieldOpt_Class, ONLY: TypeFieldOpt
 USE GlobalData, ONLY: I4B
 USE GlobalData, ONLY: LGT
 USE GlobalData, ONLY: DFP
+USE MatrixField_Class, ONLY: MatrixField_
 USE QuadraturePoint_Method, ONLY: QuadraturePointDisplay => Display
 USE QuadraturePoint_Method, ONLY: QuadraturePoint
 USE ReallocateUtility, ONLY: Reallocate
@@ -76,12 +82,14 @@ TYPE(ScalarField_) :: sol, rhs, u0
 !! rhs is the right hand side of Ax=b,
 !! u0 is same as sol
 INTEGER(I4B) :: nsd, iel, xij_nrow, xij_ncol, maxGeoCon, maxFeCon, &
-                elemDiffMat_nrow, elemDiffMat_ncol
+                elemDiffMat_nrow, elemDiffMat_ncol, fecon_size
 !! number of spatial dimension, 1D, 2D, 3D
 LOGICAL(LGT) :: isok
 TYPE(ElemShapeData_) :: elemsd, geoelemsd
 TYPE(QuadraturePoint_) :: quad
 REAL(DFP), ALLOCATABLE :: xij(:, :), elemDiffMat(:, :)
+TYPE(MatrixField_) :: tanmat
+INTEGER(I4B), ALLOCATABLE :: fecon(:)
 
 !! Do you want so much message from the library
 CALL e%SetQuietMode(math%yes)
@@ -119,6 +127,10 @@ boundaryMesh => dom%GetMeshPointer(dim=nsd - 1)
 CALL sol%ImportFromToml(fedof=fedof, geofedof=geofedof, dom=dom, &
                         filename=tomlFileName, tomlName="sol")
 
+! let us display
+! CALL BlankLines()
+! CALL sol%Display("sol: ")
+
 ! CALL BlankLines()
 ! CALL Display(fedof%IsInitiated(), "fedof IsInitiated after: ")
 ! CALL Display(geofedof%IsInitiated(), "geofedof IsInitiated after: ")
@@ -133,9 +145,10 @@ CALL rhs%SetName("rhs")
 CALL u0%Initiate(sol)
 CALL u0%SetName("u0")
 
-! let us display
-! CALL BlankLines()
-! CALL sol%Display("sol: ")
+! Let us initiate tanmat by copyin from sol
+CALL tanmat%Initiate(sol)
+CALL tanmat%SetName("tanmat")
+! CALL tanmat%Display("tanmat: ")
 
 ! Some important functions
 CALL Display(sol%SIZE(), "size of sol: ")
@@ -145,6 +158,7 @@ maxGeoCon = geofedof%GetMaxTotalConnectivity()
 maxFeCon = fedof%GetMaxTotalConnectivity()
 CALL Reallocate(xij, 3, maxGeoCon)
 CALL Reallocate(elemDiffMat, maxFeCon, maxFeCon)
+CALL Reallocate(fecon, maxFeCon)
 
 DO iel = 1, cellMesh%GetTotalElements()
   CALL Display("iel  = "//ToString(iel))
@@ -169,9 +183,24 @@ DO iel = 1, cellMesh%GetTotalElements()
                              islocal=math%yes, &
                              nrow=xij_nrow, ncol=xij_ncol)
 
+  ! Here we calculate shape function data
   CALL feptr%GetGlobalElemShapeData2(geofeptr=geofeptr, elemsd=elemsd, &
                                      geoelemsd=geoelemsd, &
                                      xij=xij, quad=quad)
+
+  ! elemsd%N(I, ips): Ith node shape function at ips integration point.
+  ! CALL Display(elemsd%N(1:elemsd%nns, 1:elemsd%nips), "N: ")
+  ! CALL BlankLines()
+  ! CALL Display(elemsd%dNdXi(1:elemsd%nns, 1:elemsd%nsd, &
+  !                           1:elemsd%nips), "dNdXi: ")
+  ! CALL BlankLines()
+  ! CALL Display(elemsd%dNdXt(1:elemsd%nns, 1:elemsd%nsd, &
+  !                           1:elemsd%nips), "dNdXt: ")
+  ! CALL BlankLines()
+  ! CALL Display(elemsd%jacobian(1:elemsd%nsd, 1:elemsd%nsd, &
+  !                              1:elemsd%nips), "jacobian: ")
+  ! CALL BlankLines()
+  ! STOP
 
   CALL DiffusionMatrix_(test=elemsd, trial=elemsd, ans=elemDiffMat, &
                         nrow=elemDiffMat_nrow, ncol=elemDiffMat_ncol)
@@ -180,17 +209,23 @@ DO iel = 1, cellMesh%GetTotalElements()
   ! CALL Display(elemDiffMat(1:elemDiffMat_nrow, &
   !                          1:elemDiffMat_ncol), "elemDiffMat: ")
   ! CALL BlankLines(10)
-  ! CALL Display(xij(1:xij_nrow, 1:xij_ncol), "xij: ", 10)
-  ! CALL BlankLines(10)
-  ! CALL QuadraturePointDisplay(quad, "quad: ", 10)
-  ! CALL BlankLines(10)
-  ! CALL ElemShapeDataDisplay(elemsd, "elemsd: ", 10)
-  ! CALL BlankLines(10)
-  ! CALL ElemShapeDataDisplay(geoelemsd, "geoelemsd: ", 10)
-  ! CALL BlankLines(10)
-  ! STOP
 
+  ! MODULE SUBROUTINE obj_Set1( &
+  !   obj, globalNode, islocal, VALUE, storageFMT, scale, addContribution)
+
+  CALL fedof%GetConnectivity_(ans=fecon, tsize=fecon_size, opt="A", &
+                              globalElement=iel, islocal=math%yes)
+
+  ! CALL BlankLines()
+  ! CALL Display(fecon(1:fecon_size), "fecon: ")
+  ! CALL BlankLines()
+  CALL tanmat%Set(globalNode=fecon, islocal=math%yes, &
+                  VALUE=elemDiffMat(1:elemDiffMat_nrow, 1:elemDiffMat_ncol), &
+                  storageFMT=TypeDOFOpt%storageFormatDOF, &
+                  scale=math%one, addContribution=math%yes)
 END DO
+
+CALL tanmat%Display("tanmat: ")
 
 CALL dom%DEALLOCATE()
 CALL fedof%DEALLOCATE()

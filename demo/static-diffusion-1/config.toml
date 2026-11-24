@@ -1,0 +1,39 @@
+[domain]
+filename = "./mesh/square_4x4.h5"
+totalMedium = 1
+
+[sol]
+name = "sol"
+engine = "NATIVE_SERIAL"
+fieldType = "Normal"
+spaceCompo = 1
+timeCompo = 1
+fedofName = "space"
+geofedofName = "geofedof"
+
+[sol.geofedof]
+baseContinuity = "H1"
+baseInterpolation = "Lagrange"
+brokenSpace = false
+ipType = "Equidistance"
+basisType = "Monomial"
+
+[sol.space]
+baseContinuity = "H1"
+baseInterpolation = "Lagrange"
+brokenSpace = false
+ipType = "Equidistance"
+basisType = "Monomial"
+order = 1
+
+# numberical integration properties are given below
+scaleForQuadOrder = 2
+# used for numerical integration
+quadOptName = "quadOpt"
+# used for numerical integration
+
+[sol.space.quadOpt]
+isHomogeneous = true
+# used for numerical integration
+quadratureType = "GaussLegendre"
+# used for numerical integration
